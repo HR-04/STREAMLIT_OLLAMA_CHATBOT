@@ -1,6 +1,7 @@
 import streamlit as st
 import ollama
 import time
+from datetime import datetime
 import random
 from threading import Timer
 
@@ -53,14 +54,17 @@ def update_tips():
 st.sidebar.subheader("Java Tips, Tricks, and Jokes")
 st.sidebar.write(st.session_state["current_tip"])
 
-# Timer display using streamlit.components.v1
-def display_timer():
-    current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-    return f"""
-    <div style="font-size: 20px; font-weight: bold; margin: 20px 0;">
-        Current Time: {current_time}
-    </div>
-    """
+# Function to display current time
+def display_time():
+    return datetime.now().strftime('%H:%M:%S')
+
+# Placeholder for time display
+time_placeholder = st.empty()
+
+# Loop to update time every second
+while True:
+    time_placeholder.text(display_time())
+    time.sleep(1)
 
 # Function to generate tips dynamically using the model
 def generate_tip():
