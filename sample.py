@@ -3,6 +3,8 @@ import ollama
 import time
 import random
 
+
+st.title("Java Tutor🤖🚀")
 # Initialize session state for messages and model
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{
@@ -24,7 +26,7 @@ if "messages" not in st.session_state:
     st.session_state["model"] = "llama3"  # Default model
     st.session_state["current_tip"] = "💡 Tip: Use meaningful variable names to make your code more readable."
     st.session_state["last_tip_update"] = time.time()
-    st.session_state["update_interval"] = 30  # 30 seconds
+    st.session_state["update_interval"] = 25  # 30 seconds
 
 # Sidebar for model selection using a dropdown
 model_choice = st.sidebar.selectbox("Choose a model", ("llama3", "codellama"))
