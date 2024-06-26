@@ -1,9 +1,7 @@
 import streamlit as st
 import ollama
 import time
-from datetime import datetime
 import random
-from threading import Timer
 
 # Initialize session state for messages and model
 if "messages" not in st.session_state:
@@ -25,6 +23,8 @@ if "messages" not in st.session_state:
     }, {"role": "assistant", "content": "How can I assist you?"}]
     st.session_state["model"] = "llama3"  # Default model
     st.session_state["current_tip"] = "💡 Tip: Use meaningful variable names to make your code more readable."
+    st.session_state["last_tip_update"] = time.time()
+    st.session_state["update_interval"] = 30  # 30 seconds
 
 # Sidebar for model selection using a dropdown
 model_choice = st.sidebar.selectbox("Choose a model", ("llama3", "codellama"))
@@ -48,33 +48,10 @@ def update_tips():
         "💡 Tip: Always use proper indentation to make your code more readable and maintainable."
     ]
     st.session_state["current_tip"] = random.choice(tips_list)
-    st.rerun()
 
-# Display tips and tricks in the sidebar
-st.sidebar.subheader("Java Tips, Tricks, and Jokes")
-st.sidebar.write(st.session_state["current_tip"])
-
-# Function to display current time
-def display_time():
-    return datetime.now().strftime('%H:%M:%S')
-
-# Placeholder for time display
-time_placeholder = st.empty()
-
-# Loop to update time every second
-while True:
-    time_placeholder.text(display_time())
-    time.sleep(1)
-
-# Function to generate tips dynamically using the model
-def generate_tip():
-    prompt = {
-        "role": "user",
-        "content": "Provide a Java coding tip, trick, or joke."
-    }
-    response = ollama.chat(model=st.session_state["model"], messages=[prompt])
-    st.session_state["current_tip"] = response['choices'][0]['message']['content']
-    st.rerun()
+# Timer display using streamlit.empty()
+tip_placeholder = st.sidebar.empty()
+timer_placeholder = st.sidebar.empty()
 
 # Write Message History
 for msg in st.session_state.messages:
@@ -99,15 +76,30 @@ if prompt := st.chat_input():
     st.chat_message('assistant', avatar="🤖").write_stream(generate_response)
     st.session_state.messages.append({'role': 'assistant', 'content': st.session_state["full_message"]})
 
-# Display the current time in the sidebar
-with st.sidebar:
-    st.markdown(display_timer(), unsafe_allow_html=True)
+# Main loop to update tips every 30 seconds and display countdown timer
+while True:
+    current_time = time.time()
+    
+    # Update tips every 30 seconds
+    if current_time - st.session_state["last_tip_update"] > st.session_state["update_interval"]:
+        update_tips()
+        st.session_state["last_tip_update"] = current_time
 
-# Set a timer to update the tips every 2 minutes
-if "timer" not in st.session_state:
-    st.session_state["timer"] = Timer(120.0, generate_tip)
-    st.session_state["timer"].start()
+    # Calculate time remaining for the next update
+    time_remaining = int(st.session_state["update_interval"] - (current_time - st.session_state["last_tip_update"]))
+    
+    # Display the countdown timer and tips
+    timer_placeholder.markdown(f"""
+    <div style="font-size: 20px; font-weight: bold; margin: 20px 0;">
+        Next update in: {time_remaining} seconds
+    </div>
+    """, unsafe_allow_html=True)
+    
+    tip_placeholder.markdown(f"""
+    <div style="background-color: black; color: white; padding: 20px; border-radius: 10px;">
+        {st.session_state["current_tip"]}
+    </div>
+    """, unsafe_allow_html=True)
 
-# Update tips immediately if running for the first time
-if st.session_state["current_tip"] == "":
-    generate_tip()
+    # Sleep for a short period to prevent CPU overuse
+    time.sleep(1)
